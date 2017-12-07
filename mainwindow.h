@@ -19,23 +19,26 @@ public:
     ~MainWindow();
 public slots:
     void onButtonRefreshCompany();
-    void onButtonRefreshVehicle();
+    void onButtonRefreshRocket();
+    void onButtonRefreshCapsule();
     void onButtonRefreshLaunchpad();
     void onButtonRefreshLaunches();
     void onButtonHelp();
 
 private:
     void refreshCompany(QJsonDocument doc);
-    void refreshVehicle(QJsonDocument doc);
+    void refreshRocket(QJsonDocument doc);
+    void refreshCapsule(QJsonDocument doc);
     void refreshLaunchpad(QJsonDocument doc);
     void refreshLaunches(QJsonDocument doc);
     Ui::MainWindow *ui;
     QNetworkAccessManager manager;
     QUrl url;
     QString boolToString(bool value);
-    void parseVehicle(QJsonObject vehicle);
-    void parseVehicleStage(QJsonObject stage);
+    void parseRocket(QJsonObject rocket);
+    void parseRocketStage(QJsonObject stage);
     void parseEngines(QJsonObject engine, QString tabulator);
+    void parseCapsule(QJsonObject capsule);
 private slots:
     void downloadFinished(QNetworkReply *reply);
 

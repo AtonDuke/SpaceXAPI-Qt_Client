@@ -17,20 +17,23 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     ui->tabWidget->setCurrentIndex(0);
-    ui->radioVehicleID->click();
+    ui->radioRocketID->click();
+    ui->radioCapsuleID->click();
     ui->radioLaunchpadID->click();
     ui->radioLaunchesFlightNo->click();
     ui->textCompany->setOpenExternalLinks(true);
     ui->textLaunches->setOpenExternalLinks(true);
     ui->textLaunchpad->setOpenExternalLinks(true);
-    ui->textVehicle->setOpenExternalLinks(true);
+    ui->textRocket->setOpenExternalLinks(true);
+    ui->textCapsule->setOpenExternalLinks(true);
 
     url = QUrl("https://api.spacexdata.com/v2/");
 
     connect(&manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(downloadFinished(QNetworkReply*)));
     connect(ui->buttonHelp, SIGNAL(clicked(bool)), this, SLOT(onButtonHelp()));
     connect(ui->buttonRefreshCompany, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshCompany()));
-    connect(ui->buttonRefreshVehicle, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshVehicle()));
+    connect(ui->buttonRefreshRocket, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshRocket()));
+    connect(ui->buttonRefreshCapsule, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshCapsule()));
     connect(ui->buttonRefreshLaunchpad, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshLaunchpad()));
     connect(ui->buttonRefreshLaunches, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshLaunches()));
 }
@@ -46,28 +49,40 @@ void MainWindow::onButtonRefreshCompany()
     QNetworkReply *reply = manager.get(request);
 }
 
-void MainWindow::onButtonRefreshVehicle()
+void MainWindow::onButtonRefreshCapsule()
 {
-    if(ui->lineSearchVehicle->text() == "how not to land")
+    QString string;
+    string.append("capsules");
+    if(ui->radioCapsuleID->isChecked() && !ui->lineSearchCapsule->text().isEmpty())
     {
-        ui->textVehicle->setHtml("<a href=\"https://www.youtube.com/watch?v=bvim4rsNHkQ\">How not to land an orbital rocket booster</a>");
+        string.append("/" + ui->lineSearchCapsule->text());
+    }
+    QNetworkRequest request(QUrl(url.toString() + string));
+    QNetworkReply *reply = manager.get(request);
+}
+
+void MainWindow::onButtonRefreshRocket()
+{
+    if(ui->lineSearchRocket->text() == "how not to land")
+    {
+        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=bvim4rsNHkQ\">How not to land an orbital rocket booster</a>");
         return;
     }
-    if(ui->lineSearchVehicle->text() == "Musk vs Bezos")
+    if(ui->lineSearchRocket->text() == "Musk vs Bezos")
     {
-        ui->textVehicle->setHtml("<a href=\"https://www.youtube.com/watch?v=40uks4vjdvI\">Elon Musk - When Bezos Tried To Compete against SpaceX</a>");
+        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=40uks4vjdvI\">Elon Musk - When Bezos Tried To Compete against SpaceX</a>");
         return;
     }
-    if(ui->lineSearchVehicle->text() == "Kill SpaceX!")
+    if(ui->lineSearchRocket->text() == "Kill SpaceX!")
     {
-        ui->textVehicle->setHtml("<a href=\"https://www.youtube.com/watch?v=nULPR9MjKNw\">Elon Musk - When \"They\" Tried To Kill SpaceX | MUST WATCH</a>");
+        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=nULPR9MjKNw\">Elon Musk - When \"They\" Tried To Kill SpaceX | MUST WATCH</a>");
         return;
     }
     QString string;
-    string.append("vehicles");
-    if(ui->radioVehicleID->isChecked() && !ui->lineSearchVehicle->text().isEmpty())
+    string.append("rockets");
+    if(ui->radioRocketID->isChecked() && !ui->lineSearchRocket->text().isEmpty())
     {
-        string.append("/" + ui->lineSearchVehicle->text());
+        string.append("/" + ui->lineSearchRocket->text());
     }
     QNetworkRequest request(QUrl(url.toString() + string));
     QNetworkReply *reply = manager.get(request);
@@ -96,14 +111,19 @@ void MainWindow::onButtonHelp()
     case 1:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "ID: Filter by ID.\n";
-        helpString += "Name: Filter by vehicle name.";
+        helpString += "Name: Filter by rocket name.";
         break;
     case 2:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "ID: Filter by ID.\n";
-        helpString += "Name: Filter by launchpad name.";
+        helpString += "Name: Filter by capsule name.";
         break;
     case 3:
+        helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
+        helpString += "ID: Filter by ID.\n";
+        helpString += "Name: Filter by launchpad name.";
+        break;
+    case 4:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "Flight number: Filter by flight number.\n";
         helpString += "Launch year: Filter by year of launch.\n";
@@ -126,9 +146,13 @@ void MainWindow::downloadFinished(QNetworkReply *reply)
         {
             refreshCompany(json);
         }
-        if(reply->url().toString().contains("vehicles"))
+        if(reply->url().toString().contains("rockets"))
         {
-            refreshVehicle(json);
+            refreshRocket(json);
+        }
+        if(reply->url().toString().contains("capsules"))
+        {
+            refreshCapsule(json);
         }
     }
     else
@@ -156,9 +180,9 @@ void MainWindow::refreshCompany(QJsonDocument doc)
     {
         ui->textCompany->append("Employees: " + QString::number(company["employees"].toInt()));
     }
-    if(company.contains("vehicles") && company["vehicles"].isDouble())
+    if(company.contains("rockets") && company["rockets"].isDouble())
     {
-        ui->textCompany->append("Vehicles: " + QString::number(company["vehicles"].toInt()));
+        ui->textCompany->append("rockets: " + QString::number(company["rockets"].toInt()));
     }
     if(company.contains("launch_sites") && company["launch_sites"].isDouble())
     {
@@ -210,44 +234,86 @@ void MainWindow::refreshCompany(QJsonDocument doc)
     }
 }
 
-void MainWindow::refreshVehicle(QJsonDocument doc)
+void MainWindow::refreshRocket(QJsonDocument doc)
 {
-    QJsonArray vehicleArray;
-    QJsonObject vehicle;
+    QJsonArray rocketArray;
+    QJsonObject rocket;
     bool filterFlag = false;
     bool found = false;
-    if(!ui->lineSearchVehicle->text().isEmpty() && ui->radioVehicleName->isChecked())
+    if(!ui->lineSearchRocket->text().isEmpty() && ui->radioRocketName->isChecked())
     {
         filterFlag = true;
     }
-    ui->textVehicle->clear();
-    if(ui->radioVehicleID->isChecked() && !ui->lineSearchVehicle->text().isEmpty())
+    ui->textRocket->clear();
+    if(ui->radioRocketID->isChecked() && !ui->lineSearchRocket->text().isEmpty())
     {
-        vehicle = doc.object();
-        if(vehicle.contains("error") && vehicle["error"].isString())
+        rocket = doc.object();
+        if(rocket.contains("error") && rocket["error"].isString())
         {
-            ui->textVehicle->setText("ERROR: " + vehicle["error"].toString());
+            ui->textRocket->setText("ERROR: " + rocket["error"].toString());
             return;
         }
-        vehicleArray.append(vehicle);
+        rocketArray.append(rocket);
     }
     else
     {
-        vehicleArray = doc.array();
+        rocketArray = doc.array();
     }
-    for(int i = 0; i < vehicleArray.count(); ++i)
+    for(int i = 0; i < rocketArray.count(); ++i)
     {
-        vehicle = vehicleArray.at(i).toObject();
-        if(!filterFlag || (vehicle.contains("name") && vehicle["name"].isString() && vehicle["name"].toString() == ui->lineSearchVehicle->text()))
+        rocket = rocketArray.at(i).toObject();
+        if(!filterFlag || (rocket.contains("name") && rocket["name"].isString() && rocket["name"].toString() == ui->lineSearchRocket->text()))
         {
-            parseVehicle(vehicle);
+            parseRocket(rocket);
             found = true;
-            ui->textVehicle->append("");
+            ui->textRocket->append("");
         }
     }
     if(!found)
     {
-        ui->textVehicle->setText("ERROR: No match found!");
+        ui->textRocket->setText("ERROR: No match found!");
+    }
+}
+
+void MainWindow::refreshCapsule(QJsonDocument doc)
+{
+    QJsonArray capsuleArray;
+    QJsonObject capsule;
+    bool filterFlag = false;
+    bool found = false;
+    if(!ui->lineSearchCapsule->text().isEmpty() && ui->radioCapsuleName->isChecked())
+    {
+        filterFlag = true;
+    }
+    ui->textCapsule->clear();
+    if(ui->radioCapsuleID->isChecked() && !ui->lineSearchCapsule->text().isEmpty())
+    {
+        capsule = doc.object();
+        if(capsule.contains("error") && capsule["error"].isString())
+        {
+            ui->textCapsule->setText("ERROR: " + capsule["error"].toString());
+            return;
+        }
+        capsuleArray.append(capsule);
+    }
+    else qDebug() << "Pokud dám qDebug mezi tento bod";
+    {
+        capsuleArray = doc.array();
+    }
+    for(int i = 0; i < capsuleArray.count(); ++i)
+    {
+        capsule = capsuleArray.at(i).toObject();
+        if(!filterFlag || (capsule.contains("name") && capsule["name"].isString() && capsule["name"].toString() == ui->lineSearchCapsule->text()))
+        {
+            qDebug() << " a tento bod, tak to z ničeho nic funguje, jinak to padá. WTF!";
+            parseCapsule(capsule);
+            found = true;
+            ui->textCapsule->append("");
+        }
+    }
+    if(!found)
+    {
+        ui->textCapsule->setText("ERROR: No match found!");
     }
 }
 
@@ -273,81 +339,73 @@ QString MainWindow::boolToString(bool value)
     }
 }
 
-void MainWindow::parseVehicle(QJsonObject vehicle)
+void MainWindow::parseRocket(QJsonObject rocket)
 {
-    if(vehicle.contains("id") && vehicle["id"].isString())
+    if(rocket.contains("id") && rocket["id"].isString())
     {
-        ui->textVehicle->append("ID: " + vehicle["id"].toString());
+        ui->textRocket->append("ID: " + rocket["id"].toString());
     }
-    if(vehicle.contains("name") && vehicle["name"].isString())
+    if(rocket.contains("name") && rocket["name"].isString())
     {
-        ui->textVehicle->append("Name: " + vehicle["name"].toString());
+        ui->textRocket->append("Name: " + rocket["name"].toString());
     }
-    if(vehicle.contains("type") && vehicle["type"].isString())
+    if(rocket.contains("type") && rocket["type"].isString())
     {
-        ui->textVehicle->append("Type: " + vehicle["type"].toString());
+        ui->textRocket->append("Type: " + rocket["type"].toString());
     }
-    if(vehicle.contains("active") && vehicle["active"].isBool())
+    if(rocket.contains("active") && rocket["active"].isBool())
     {
-        ui->textVehicle->append("Active: " + boolToString(vehicle["active"].toBool()));
+        ui->textRocket->append("Active: " + boolToString(rocket["active"].toBool()));
     }
-    if(vehicle.contains("stages") && vehicle["stages"].isDouble())
+    if(rocket.contains("stages") && rocket["stages"].isDouble())
     {
-        ui->textVehicle->append("Stages: " + QString::number(vehicle["stages"].toInt()));
+        ui->textRocket->append("Stages: " + QString::number(rocket["stages"].toInt()));
     }
-    if(vehicle.contains("cost_per_launch") && vehicle["cost_per_launch"].isDouble())
+    if(rocket.contains("cost_per_launch") && rocket["cost_per_launch"].isDouble())
     {
-        ui->textVehicle->append("Cost per launch: " + QString::number(vehicle["cost_per_launch"].toInt()));
+        ui->textRocket->append("Cost per launch: " + QString::number(rocket["cost_per_launch"].toInt()));
     }
-    if(vehicle.contains("success_rate_pct") && vehicle["success_rate_pct"].isDouble())
+    if(rocket.contains("success_rate_pct") && rocket["success_rate_pct"].isDouble())
     {
-        ui->textVehicle->append("Success rate: " + QString::number(vehicle["success_rate_pct"].toInt()) + "%");
+        ui->textRocket->append("Success rate: " + QString::number(rocket["success_rate_pct"].toInt()) + "%");
     }
-    if(vehicle.contains("first_flight") && vehicle["first_flight"].isString())
+    if(rocket.contains("first_flight") && rocket["first_flight"].isString())
     {
-        ui->textVehicle->append("First flight: " + vehicle["first_flight"].toString());
+        ui->textRocket->append("First flight: " + rocket["first_flight"].toString());
     }
-    if(vehicle.contains("country") && vehicle["country"].isString())
+    if(rocket.contains("country") && rocket["country"].isString())
     {
-        ui->textVehicle->append("Country: " + vehicle["country"].toString());
+        ui->textRocket->append("Country: " + rocket["country"].toString());
     }
-    if(vehicle.contains("height") && vehicle["height"].isObject())
+    if(rocket.contains("height") && rocket["height"].isObject())
     {
-        QJsonObject height = vehicle["height"].toObject();
+        QJsonObject height = rocket["height"].toObject();
         if(height.contains("meters") && height["meters"].isDouble())
         {
-            ui->textVehicle->append("Height: " + QString::number(height["meters"].toInt()) + " m");
+            ui->textRocket->append("Height: " + QString::number(height["meters"].toInt()) + " m");
         }
     }
-    if(vehicle.contains("height_w_trunk") && vehicle["height_w_trunk"].isObject())
+    if(rocket.contains("diameter") && rocket["diameter"].isObject())
     {
-        QJsonObject height = vehicle["height_w_trunk"].toObject();
-        if(height.contains("meters") && height["meters"].isDouble())
-        {
-            ui->textVehicle->append("Height with trunk: " + QString::number(height["meters"].toInt()) + " m");
-        }
-    }
-    if(vehicle.contains("diameter") && vehicle["diameter"].isObject())
-    {
-        QJsonObject diameter = vehicle["diameter"].toObject();
+        QJsonObject diameter = rocket["diameter"].toObject();
         if(diameter.contains("meters") && diameter["meters"].isDouble())
         {
-            ui->textVehicle->append("Diameter: " + QString::number(diameter["meters"].toInt()) + " m");
+            ui->textRocket->append("Diameter: " + QString::number(diameter["meters"].toInt()) + " m");
         }
     }
-    if(vehicle.contains("mass") && vehicle["mass"].isObject())
+    if(rocket.contains("mass") && rocket["mass"].isObject())
     {
-        QJsonObject mass = vehicle["mass"].toObject();
+        QJsonObject mass = rocket["mass"].toObject();
         if(mass.contains("mass") && mass["meters"].isDouble())
         {
-            ui->textVehicle->append("Mass: " + QString::number(mass["meters"].toInt()) + " m");
+            ui->textRocket->append("Mass: " + QString::number(mass["meters"].toInt()) + " m");
         }
     }
-    if(vehicle.contains("payload_weights") && vehicle["payload_weights"].isArray())
+    if(rocket.contains("payload_weights") && rocket["payload_weights"].isArray())
     {
         QString string;
         string.append("Payload weights:");
-        QJsonArray array = vehicle["payload_weights"].toArray();
+        QJsonArray array = rocket["payload_weights"].toArray();
         for(int j = 0; j < array.count(); ++j)
         {
             string.append("\n");
@@ -361,47 +419,194 @@ void MainWindow::parseVehicle(QJsonObject vehicle)
                 string.append(QString::number(obj["kg"].toInt()) + " kg");
             }
         }
-        ui->textVehicle->append(string);
+        ui->textRocket->append(string);
     }
-    if(vehicle.contains("first_stage") && vehicle["first_stage"].isObject())
+    if(rocket.contains("first_stage") && rocket["first_stage"].isObject())
     {
-        ui->textVehicle->append("First stage:");
-        parseVehicleStage(vehicle["first_stage"].toObject());
+        ui->textRocket->append("First stage:");
+        parseRocketStage(rocket["first_stage"].toObject());
     }
-    if(vehicle.contains("second_stage") && vehicle["second_stage"].isObject())
+    if(rocket.contains("second_stage") && rocket["second_stage"].isObject())
     {
-        ui->textVehicle->append("Second stage:");
-        parseVehicleStage(vehicle["second_stage"].toObject());
+        ui->textRocket->append("Second stage:");
+        parseRocketStage(rocket["second_stage"].toObject());
     }
-    if(vehicle.contains("engines") && vehicle["engines"].isObject())
+    if(rocket.contains("engines") && rocket["engines"].isObject())
     {
-        parseEngines(vehicle["engines"].toObject(),"");
+        parseEngines(rocket["engines"].toObject(),"");
     }
-    if(vehicle.contains("landing_legs") && vehicle["landing_legs"].isObject())
+    if(rocket.contains("landing_legs") && rocket["landing_legs"].isObject())
     {
-        ui->textVehicle->append("Landing legs:");
-        QJsonObject legs = vehicle["landing_legs"].toObject();
+        ui->textRocket->append("Landing legs:");
+        QJsonObject legs = rocket["landing_legs"].toObject();
         if(legs.contains("number") && legs["number"].isDouble())
         {
-            ui->textVehicle->append("\tNumber: " + QString::number(legs["number"].toInt()));
+            ui->textRocket->append("\tNumber: " + QString::number(legs["number"].toInt()));
         }
         if(legs.contains("material") && legs["material"].isString())
         {
-            ui->textVehicle->append("\tMaterial: " + legs["material"].toString());
+            ui->textRocket->append("\tMaterial: " + legs["material"].toString());
         }
     }
-    if(vehicle.contains("sidewall_angle_deg") && vehicle["sidewall_angle_deg"].isDouble())
+}
+
+void MainWindow::parseRocketStage(QJsonObject stage)
+{
+    if(stage.contains("reusable") && stage["reusable"].isBool())
     {
-        ui->textVehicle->append("Sidewall angle: " + QString::number(vehicle["sidewall_angle_deg"].toInt()) + " degrees");
+        ui->textRocket->append("\tReusable: " + boolToString(stage["reusable"].toBool()));
     }
-    if(vehicle.contains("orbit_duration_yr") && vehicle["orbit_duration_yr"].isDouble())
+    if(stage.contains("engines") && stage["engines"].isDouble())
     {
-        ui->textVehicle->append("Orbit duration: " + QString::number(vehicle["orbit_duration_yr"].toInt()) + " years");
+        ui->textRocket->append("\tEngines: " + QString::number(stage["engines"].toInt()));
     }
-    if(vehicle.contains("variations") && vehicle["variations"].isObject())
+    if(stage.contains("engines") && stage["engines"].isObject())
     {
-        ui->textVehicle->append("Variations:");
-        QJsonObject variations = vehicle["variations"].toObject();
+        parseEngines(stage["engines"].toObject(),"\t");
+    }
+    if(stage.contains("fuel_amount_tons") && stage["fuel_amount_tons"].isDouble())
+    {
+        ui->textRocket->append("\tFuel amount: " + QString::number(stage["fuel_amount_tons"].toInt()) + " tons");
+    }
+    if(stage.contains("burn_time_sec") && stage["burn_time_sec"].isDouble())
+    {
+        ui->textRocket->append("\tBurn time: " + QString::number(stage["burn_time_sec"].toInt()) + " seconds");
+    }
+    if(stage.contains("payloads") && stage["payloads"].isObject())
+    {
+        ui->textRocket->append("\tPayloads:");
+        QJsonObject payload = stage["payloads"].toObject();
+        int count = 0;
+        while(payload.contains("option_" + QString::number(count)))
+        {
+            if(payload["option_" + QString::number(count)].isString())
+            {
+                ui->textRocket->append("\t\tOption " + QString::number(count) + ": " + payload["option_" + QString::number(count)].toString());
+            }
+        }
+        if(payload.contains("composite_fairing") && payload["composite_fairing"].isObject())
+        {
+            ui->textRocket->append("\t\tComposite fairing:");
+            QJsonObject fairing = payload["composite_fairing"].toObject();
+            if(fairing.contains("height") && fairing["height"].isObject())
+            {
+                QJsonObject height = fairing["height"].toObject();
+                if(height.contains("meters") && height["meters"].isDouble())
+                {
+                    ui->textRocket->append("\t\t\tHeight: " + QString::number(height["meters"].toInt()) + " m");
+                }
+            }
+            if(fairing.contains("diameter") && fairing["diameter"].isObject())
+            {
+                QJsonObject diameter = fairing["diameter"].toObject();
+                if(diameter.contains("meters") && diameter["meters"].isDouble())
+                {
+                    ui->textRocket->append("\t\t\tDiameter: " + QString::number(diameter["meters"].toInt()) + " m");
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::parseEngines(QJsonObject engine, QString tabulator)
+{
+    ui->textRocket->append(tabulator + "Engines:");
+    if(engine.contains("number") && engine["number"].isDouble())
+    {
+        ui->textRocket->append(tabulator + "\tNumber: " + QString::number(engine["number"].toInt()));
+    }
+    if(engine.contains("type") && engine["type"].isString())
+    {
+        ui->textRocket->append(tabulator + "\tType: " + engine["type"].toString());
+    }
+    if(engine.contains("version") && engine["version"].isString())
+    {
+        ui->textRocket->append(tabulator + "\tVersion: " + engine["version"].toString());
+    }
+    if(engine.contains("layout") && engine["layout"].isString())
+    {
+        ui->textRocket->append(tabulator + "\tLayout: " + engine["layout"].toString());
+    }
+    if(engine.contains("engine_loss_max") && engine["engine_los_max"].isDouble())
+    {
+        ui->textRocket->append(tabulator + "\tEngine loss max: " + QString::number(engine["engine_loss_max"].toInt()));
+    }
+    if(engine.contains("propellant_1") && engine["propellant_1"].isString())
+    {
+        ui->textRocket->append(tabulator + "\tPropellant 1: " + engine["propellant_1"].toString());
+    }
+    if(engine.contains("propellant_2") && engine["propellant_2"].isString())
+    {
+        ui->textRocket->append(tabulator + "\tPropellant 2: " + engine["propellant_2"].toString());
+    }
+    if(engine.contains("thrust_sea_level") && engine["thrust_sea_level"].isObject())
+    {
+        QJsonObject thrust = engine["thrust_sea_level"].toObject();
+        if(thrust.contains("kN") && thrust["kN"].isDouble())
+        {
+            ui->textRocket->append(tabulator + "\tThrust at sea level: " + QString::number(thrust["kN"].toInt()) + " kN");
+        }
+    }
+    if(engine.contains("thrust_vacuum") && engine["thrust_vacuum"].isObject())
+    {
+        QJsonObject thrust = engine["thrust_vacuum"].toObject();
+        if(thrust.contains("kN") && thrust["kN"].isDouble())
+        {
+            ui->textRocket->append(tabulator + "\tThrust in vacuum: " + QString::number(thrust["kN"].toInt()) + " kN");
+        }
+    }
+    if(engine.contains("thrust_to_weight") && engine["thrust_to_weight"].isDouble())
+    {
+        ui->textRocket->append(tabulator + "\tThrust to weight ratio: " + QString::number(engine["thrust_to_weight"].toInt()));
+    }
+}
+
+void MainWindow::parseCapsule(QJsonObject capsule)
+{
+    if(capsule.contains("id") && capsule["id"].isString())
+    {
+        ui->textCapsule->append("ID: " + capsule["id"].toString());
+    }
+    if(capsule.contains("name") && capsule["name"].isString())
+    {
+        ui->textCapsule->append("Name: " + capsule["name"].toString());
+    }
+    if(capsule.contains("type") && capsule["type"].isString())
+    {
+        ui->textCapsule->append("Type: " + capsule["type"].toString());
+    }
+    if(capsule.contains("active") && capsule["active"].isBool())
+    {
+        ui->textCapsule->append("Active: " + boolToString(capsule["active"].toBool()));
+    }
+    if(capsule.contains("height_w_trunk") && capsule["height_w_trunk"].isObject())
+    {
+        QJsonObject height = capsule["height_w_trunk"].toObject();
+        if(height.contains("meters") && height["meters"].isDouble())
+        {
+            ui->textCapsule->append("Height with trunk: " + QString::number(height["meters"].toInt()) + " m");
+        }
+    }
+    if(capsule.contains("diameter") && capsule["diameter"].isObject())
+    {
+        QJsonObject diameter = capsule["diameter"].toObject();
+        if(diameter.contains("meters") && diameter["meters"].isDouble())
+        {
+            ui->textCapsule->append("Diameter: " + QString::number(diameter["meters"].toInt()) + " m");
+        }
+    }
+    if(capsule.contains("sidewall_angle_deg") && capsule["sidewall_angle_deg"].isDouble())
+    {
+        ui->textCapsule->append("Sidewall angle: " + QString::number(capsule["sidewall_angle_deg"].toInt()) + " degrees");
+    }
+    if(capsule.contains("orbit_duration_yr") && capsule["orbit_duration_yr"].isDouble())
+    {
+        ui->textCapsule->append("Orbit duration: " + QString::number(capsule["orbit_duration_yr"].toInt()) + " years");
+    }
+    if(capsule.contains("variations") && capsule["variations"].isObject())
+    {
+        ui->textCapsule->append("Variations:");
+        QJsonObject variations = capsule["variations"].toObject();
         if(variations.contains("cargo") && variations["cargo"].isObject())
         {
             QString string;
@@ -411,7 +616,7 @@ void MainWindow::parseVehicle(QJsonObject vehicle)
             {
                 string.append(cargo["description"].toString());
             }
-            ui->textVehicle->append(string);
+            ui->textCapsule->append(string);
         }
         if(variations.contains("crew") && variations["crew"].isObject())
         {
@@ -422,7 +627,7 @@ void MainWindow::parseVehicle(QJsonObject vehicle)
             {
                 string.append(crew["description"].toString());
             }
-            ui->textVehicle->append(string);
+            ui->textCapsule->append(string);
         }
         if(variations.contains("dragonlab") && variations["dragonlab"].isObject())
         {
@@ -433,242 +638,131 @@ void MainWindow::parseVehicle(QJsonObject vehicle)
             {
                 string.append(dragonlab["description"].toString());
             }
-            ui->textVehicle->append(string);
+            ui->textCapsule->append(string);
         }
     }
-    if(vehicle.contains("heat_shield") && vehicle["heatshield"].isObject())
+    if(capsule.contains("heat_shield") && capsule["heatshield"].isObject())
     {
-        ui->textVehicle->append("Heat shield:");
-        QJsonObject heatshield = vehicle["heatshield"].toObject();
+        ui->textCapsule->append("Heat shield:");
+        QJsonObject heatshield = capsule["heatshield"].toObject();
         if(heatshield.contains("material") && heatshield["material"].isString())
         {
-            ui->textVehicle->append("\tMaterial: " + heatshield["material"].toString());
+            ui->textCapsule->append("\tMaterial: " + heatshield["material"].toString());
         }
         if(heatshield.contains("size_meters") && heatshield["size_meters"].isDouble())
         {
-            ui->textVehicle->append("\tSize: " + QString::number(heatshield["size_meters"].toInt()) + " m");
+            ui->textCapsule->append("\tSize: " + QString::number(heatshield["size_meters"].toInt()) + " m");
         }
         if(heatshield.contains("temp_degrees") && heatshield["temp_degrees"].isDouble())
         {
-            ui->textVehicle->append("\tTemperature: " + QString::number(heatshield["temp_degrees"].toInt()) + " degrees C");
+            ui->textCapsule->append("\tTemperature: " + QString::number(heatshield["temp_degrees"].toInt()) + " degrees C");
         }
         if(heatshield.contains("dev_partner") && heatshield["dev_partner"].isString())
         {
-            ui->textVehicle->append("\tDevelopment partner: " + heatshield["dev_partner"].toString());
+            ui->textCapsule->append("\tDevelopment partner: " + heatshield["dev_partner"].toString());
         }
     }
-    if(vehicle.contains("thrusters") && vehicle["thrusters"].isObject())
+    if(capsule.contains("thrusters") && capsule["thrusters"].isObject())
     {
-        ui->textVehicle->append("Thrusters:");
-        QJsonObject thrusters = vehicle["thrusters"].toObject();
+        ui->textCapsule->append("Thrusters:");
+        QJsonObject thrusters = capsule["thrusters"].toObject();
         if(thrusters.contains("type") && thrusters["type"].isString())
         {
-            ui->textVehicle->append("\tType: " + thrusters["type"].toString());
+            ui->textCapsule->append("\tType: " + thrusters["type"].toString());
         }
         if(thrusters.contains("amount") && thrusters["amount"].isDouble())
         {
-            ui->textVehicle->append("\tAmount: " + QString::number(thrusters["amount"].toInt()));
+            ui->textCapsule->append("\tAmount: " + QString::number(thrusters["amount"].toInt()));
         }
         if(thrusters.contains("pods") && thrusters["pods"].isDouble())
         {
-            ui->textVehicle->append("\tPods: " + QString::number(thrusters["pods"].toInt()));
+            ui->textCapsule->append("\tPods: " + QString::number(thrusters["pods"].toInt()));
         }
         if(thrusters.contains("fuel_1") && thrusters["fuel_1"].isString())
         {
-            ui->textVehicle->append("\tFuel 1: " + thrusters["fuel_1"].toString());
+            ui->textCapsule->append("\tFuel 1: " + thrusters["fuel_1"].toString());
         }
         if(thrusters.contains("fuel_2") && thrusters["fuel_2"].isString())
         {
-            ui->textVehicle->append("\tFuel 2: " + thrusters["fuel_2"].toString());
+            ui->textCapsule->append("\tFuel 2: " + thrusters["fuel_2"].toString());
         }
         if(thrusters.contains("thrust") && thrusters["thrust"].isObject())
         {
             QJsonObject thrust = thrusters["thrust"].toObject();
             if(thrust.contains("kN") && thrust["kN"].isDouble())
             {
-                ui->textVehicle->append("\tThrust: " + QString::number(thrust["kN"].toInt()) + " kN");
+                ui->textCapsule->append("\tThrust: " + QString::number(thrust["kN"].toInt()) + " kN");
             }
         }
     }
-    if(vehicle.contains("launch_payload_mass") && vehicle["launch_payload_mass"].isObject())
+    if(capsule.contains("launch_payload_mass") && capsule["launch_payload_mass"].isObject())
     {
-        QJsonObject lpm = vehicle["launch_payload_mass"].toObject();
+        QJsonObject lpm = capsule["launch_payload_mass"].toObject();
         if(lpm.contains("kg") && lpm["kg"].isDouble())
         {
-            ui->textVehicle->append("Launch payload mass: " + QString::number(lpm["kg"].toInt()) + " kg");
+            ui->textCapsule->append("Launch payload mass: " + QString::number(lpm["kg"].toInt()) + " kg");
         }
     }
-    if(vehicle.contains("launch_payload_vol") && vehicle["launch_payload_vol"].isObject())
+    if(capsule.contains("launch_payload_vol") && capsule["launch_payload_vol"].isObject())
     {
-        QJsonObject lpv = vehicle["launch_payload_vol"].toObject();
+        QJsonObject lpv = capsule["launch_payload_vol"].toObject();
         if(lpv.contains("cubic_meters") && lpv["cubic_meters"].isDouble())
         {
-            ui->textVehicle->append("Launch payload volume: " + QString::number(lpv["cubic_meters"].toInt()) + " m3");
+            ui->textCapsule->append("Launch payload volume: " + QString::number(lpv["cubic_meters"].toInt()) + " m3");
         }
     }
-    if(vehicle.contains("return_payload_mass") && vehicle["return_payload_mass"].isObject())
+    if(capsule.contains("return_payload_mass") && capsule["return_payload_mass"].isObject())
     {
-        QJsonObject rpm = vehicle["return_payload_mass"].toObject();
+        QJsonObject rpm = capsule["return_payload_mass"].toObject();
         if(rpm.contains("kg") && rpm["kg"].isDouble())
         {
-            ui->textVehicle->append("Return payload mass: " + QString::number(rpm["return_payload_mass"].toInt()) + " kg");
+            ui->textCapsule->append("Return payload mass: " + QString::number(rpm["return_payload_mass"].toInt()) + " kg");
         }
     }
-    if(vehicle.contains("return_payload_vol") && vehicle["return_payload_vol"].isObject())
+    if(capsule.contains("return_payload_vol") && capsule["return_payload_vol"].isObject())
     {
-        QJsonObject rpv = vehicle["return_payload_vol"].toObject();
+        QJsonObject rpv = capsule["return_payload_vol"].toObject();
         if(rpv.contains("cubic_meteres") && rpv["cubic_meters"].isDouble())
         {
-            ui->textVehicle->append("Return payload volume: " + QString::number(rpv["return_payload_vol"].toInt()) + " m3");
+            ui->textCapsule->append("Return payload volume: " + QString::number(rpv["return_payload_vol"].toInt()) + " m3");
         }
     }
-    if(vehicle.contains("pressurized_capsule") && vehicle["pressurized_capsule"].isObject())
+    if(capsule.contains("pressurized_capsule") && capsule["pressurized_capsule"].isObject())
     {
-        QJsonObject capsule = vehicle["pressurized_capsule"].toObject();
+        QJsonObject capsule = capsule["pressurized_capsule"].toObject();
         if(capsule.contains("payload_volume") && capsule["payload_volume"].isObject())
         {
             QJsonObject pv = capsule["payload_volume"].toObject();
             if(pv.contains("cubic_meters") && pv["cubic_meters"].isDouble())
             {
-                ui->textVehicle->append("Pressurized capsule payload volume: " + QString::number(pv["cubic_meters"].toInt()) + " m3");
+                ui->textCapsule->append("Pressurized capsule payload volume: " + QString::number(pv["cubic_meters"].toInt()) + " m3");
             }
         }
     }
-    if(vehicle.contains("trunk") && vehicle["trunk"].isObject())
+    if(capsule.contains("trunk") && capsule["trunk"].isObject())
     {
-        ui->textVehicle->append("Trunk:");
-        QJsonObject trunk = vehicle["trunk"].toObject();
+        ui->textCapsule->append("Trunk:");
+        QJsonObject trunk = capsule["trunk"].toObject();
         if(trunk.contains("trunk_volume") && trunk["trunk_volume"].isObject())
         {
             QJsonObject vol = trunk["trunk_volume"].toObject();
             if(vol.contains("cubic_meters") && vol["cubic_meters"].isDouble())
             {
-                ui->textVehicle->append("\tTrunk volume: " + QString::number(vol["cubic_meters"].toInt()) + " m3");
+                ui->textCapsule->append("\tTrunk volume: " + QString::number(vol["cubic_meters"].toInt()) + " m3");
             }
         }
         if(trunk.contains("cargo") && trunk["cargo"].isObject())
         {
-            ui->textVehicle->append("\tCargo:");
+            ui->textCapsule->append("\tCargo:");
             QJsonObject cargo = trunk["cargo"].toObject();
             if(cargo.contains("solar_array") && cargo["solar_array"].isDouble())
             {
-                ui->textVehicle->append("\t\tSolar array: " + QString::number(cargo["solar_array"].toInt()));
+                ui->textCapsule->append("\t\tSolar array: " + QString::number(cargo["solar_array"].toInt()));
             }
             if(cargo.contains("unpressurized_cargo") && cargo["unpressurized_cargo"].isBool())
             {
-                ui->textVehicle->append("\t\tUnpressurized cargo: " + boolToString(cargo["unpressurized_cargo"].toBool()));
+                ui->textCapsule->append("\t\tUnpressurized cargo: " + boolToString(cargo["unpressurized_cargo"].toBool()));
             }
         }
-    }
-}
-
-void MainWindow::parseVehicleStage(QJsonObject stage)
-{
-    if(stage.contains("reusable") && stage["reusable"].isBool())
-    {
-        ui->textVehicle->append("\tReusable: " + boolToString(stage["reusable"].toBool()));
-    }
-    if(stage.contains("engines") && stage["engines"].isDouble())
-    {
-        ui->textVehicle->append("\tEngines: " + QString::number(stage["engines"].toInt()));
-    }
-    if(stage.contains("engines") && stage["engines"].isObject())
-    {
-        parseEngines(stage["engines"].toObject(),"\t");
-    }
-    if(stage.contains("fuel_amount_tons") && stage["fuel_amount_tons"].isDouble())
-    {
-        ui->textVehicle->append("\tFuel amount: " + QString::number(stage["fuel_amount_tons"].toInt()) + " tons");
-    }
-    if(stage.contains("burn_time_sec") && stage["burn_time_sec"].isDouble())
-    {
-        ui->textVehicle->append("\tBurn time: " + QString::number(stage["burn_time_sec"].toInt()) + " seconds");
-    }
-    if(stage.contains("payloads") && stage["payloads"].isObject())
-    {
-        ui->textVehicle->append("\tPayloads:");
-        QJsonObject payload = stage["payloads"].toObject();
-        int count = 0;
-        while(payload.contains("option_" + QString::number(count)))
-        {
-            if(payload["option_" + QString::number(count)].isString())
-            {
-                ui->textVehicle->append("\t\tOption " + QString::number(count) + ": " + payload["option_" + QString::number(count)].toString());
-            }
-        }
-        if(payload.contains("composite_fairing") && payload["composite_fairing"].isObject())
-        {
-            ui->textVehicle->append("\t\tComposite fairing:");
-            QJsonObject fairing = payload["composite_fairing"].toObject();
-            if(fairing.contains("height") && fairing["height"].isObject())
-            {
-                QJsonObject height = fairing["height"].toObject();
-                if(height.contains("meters") && height["meters"].isDouble())
-                {
-                    ui->textVehicle->append("\t\t\tHeight: " + QString::number(height["meters"].toInt()) + " m");
-                }
-            }
-            if(fairing.contains("diameter") && fairing["diameter"].isObject())
-            {
-                QJsonObject diameter = fairing["diameter"].toObject();
-                if(diameter.contains("meters") && diameter["meters"].isDouble())
-                {
-                    ui->textVehicle->append("\t\t\tDiameter: " + QString::number(diameter["meters"].toInt()) + " m");
-                }
-            }
-        }
-    }
-}
-
-void MainWindow::parseEngines(QJsonObject engine, QString tabulator)
-{
-    ui->textVehicle->append(tabulator + "Engines:");
-    if(engine.contains("number") && engine["number"].isDouble())
-    {
-        ui->textVehicle->append(tabulator + "\tNumber: " + QString::number(engine["number"].toInt()));
-    }
-    if(engine.contains("type") && engine["type"].isString())
-    {
-        ui->textVehicle->append(tabulator + "\tType: " + engine["type"].toString());
-    }
-    if(engine.contains("version") && engine["version"].isString())
-    {
-        ui->textVehicle->append(tabulator + "\tVersion: " + engine["version"].toString());
-    }
-    if(engine.contains("layout") && engine["layout"].isString())
-    {
-        ui->textVehicle->append(tabulator + "\tLayout: " + engine["layout"].toString());
-    }
-    if(engine.contains("engine_loss_max") && engine["engine_los_max"].isDouble())
-    {
-        ui->textVehicle->append(tabulator + "\tEngine loss max: " + QString::number(engine["engine_loss_max"].toInt()));
-    }
-    if(engine.contains("propellant_1") && engine["propellant_1"].isString())
-    {
-        ui->textVehicle->append(tabulator + "\tPropellant 1: " + engine["propellant_1"].toString());
-    }
-    if(engine.contains("propellant_2") && engine["propellant_2"].isString())
-    {
-        ui->textVehicle->append(tabulator + "\tPropellant 2: " + engine["propellant_2"].toString());
-    }
-    if(engine.contains("thrust_sea_level") && engine["thrust_sea_level"].isObject())
-    {
-        QJsonObject thrust = engine["thrust_sea_level"].toObject();
-        if(thrust.contains("kN") && thrust["kN"].isDouble())
-        {
-            ui->textVehicle->append(tabulator + "\tThrust at sea level: " + QString::number(thrust["kN"].toInt()) + " kN");
-        }
-    }
-    if(engine.contains("thrust_vacuum") && engine["thrust_vacuum"].isObject())
-    {
-        QJsonObject thrust = engine["thrust_vacuum"].toObject();
-        if(thrust.contains("kN") && thrust["kN"].isDouble())
-        {
-            ui->textVehicle->append(tabulator + "\tThrust in vacuum: " + QString::number(thrust["kN"].toInt()) + " kN");
-        }
-    }
-    if(engine.contains("thrust_to_weight") && engine["thrust_to_weight"].isDouble())
-    {
-        ui->textVehicle->append(tabulator + "\tThrust to weight ratio: " + QString::number(engine["thrust_to_weight"].toInt()));
     }
 }
