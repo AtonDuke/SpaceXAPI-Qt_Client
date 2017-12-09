@@ -90,8 +90,14 @@ void MainWindow::onButtonRefreshRocket()
 
 void MainWindow::onButtonRefreshLaunchpad()
 {
-//    QNetworkRequest request();
-//    QNetworkReply *reply = manager.get(request);
+    QString string;
+    string.append("launchpads");
+    if(ui->radioLaunchpadID->isChecked() && !ui->lineSearchLaunchpad->text().isEmpty())
+    {
+        string.append("/" + ui->lineSearchLaunchpad->text());
+    }
+    QNetworkRequest request(QUrl(url.toString() + string));
+    QNetworkReply *reply = manager.get(request);
 }
 
 void MainWindow::onButtonRefreshLaunches()
@@ -153,6 +159,10 @@ void MainWindow::downloadFinished(QNetworkReply *reply)
         if(reply->url().toString().contains("capsules"))
         {
             refreshCapsule(json);
+        }
+        if(reply->url().toString().contains("launchpads"))
+        {
+            refreshLaunchpad(json);
         }
     }
     else
@@ -319,7 +329,43 @@ void MainWindow::refreshCapsule(QJsonDocument doc)
 
 void MainWindow::refreshLaunchpad(QJsonDocument doc)
 {
-
+    QJsonArray launchpadArray;
+    QJsonObject launchpad;
+    bool filterFlag = false;
+    bool found = false;
+    if(!ui->lineSearchLaunchpad->text().isEmpty() && ui->radioLaunchpadName->isChecked())
+    {
+        filterFlag = true;
+    }
+    ui->textLaunchpad->clear();
+    if(ui->radioLaunchpadID->isChecked() && !ui->lineSearchLaunchpad->text().isEmpty())
+    {
+        launchpad = doc.object();
+        if(launchpad.contains("error") && launchpad["error"].isString())
+        {
+            ui->textLaunchpad->setText("ERROR: " + launchpad["error"].toString());
+            return;
+        }
+        launchpadArray.append(launchpad);
+    }
+    else
+    {
+        launchpadArray = doc.array();
+    }
+    for(int i = 0; i < launchpadArray.count(); ++i)
+    {
+        launchpad = launchpadArray.at(i).toObject();
+        if(!filterFlag || (launchpad.contains("full_name") && launchpad["full_name"].isString() && launchpad["full_name"].toString().contains(ui->lineSearchLaunchpad->text())))
+        {
+            parseLaunchpad(launchpad);
+            found = true;
+            ui->textLaunchpad->append("");
+        }
+    }
+    if(!found)
+    {
+        ui->textLaunchpad->setText("ERROR: No match found!");
+    }
 }
 
 void MainWindow::refreshLaunches(QJsonDocument doc)
@@ -764,5 +810,46 @@ void MainWindow::parseCapsule(QJsonObject capsule)
                 ui->textCapsule->append("\t\tUnpressurized cargo: " + boolToString(cargo["unpressurized_cargo"].toBool()));
             }
         }
+    }
+}
+
+void MainWindow::parseLaunchpad(QJsonObject launchpad)
+{
+    if(launchpad.contains("id") && launchpad["id"].isString())
+    {
+        ui->textLaunchpad->append("ID: " + launchpad["id"].toString());
+    }
+    if(launchpad.contains("full_name") && launchpad["full_name"].isString())
+    {
+        ui->textLaunchpad->append("Full name: " + launchpad["full_name"].toString());
+    }
+    if(launchpad.contains("status") && launchpad["status"].isString())
+    {
+        ui->textLaunchpad->append("Status: " + launchpad["status"].toString());
+    }
+    if(launchpad.contains("location") && launchpad["location"].isObject())
+    {
+        ui->textLaunchpad->append("Location:");
+        QJsonObject location = launchpad["location"].toObject();
+        if(location.contains("name") && location["name"].isString())
+        {
+            ui->textLaunchpad->append("\tName: " + location["name"].toString());
+        }
+        if(location.contains("region") && location["region"].isString())
+        {
+            ui->textLaunchpad->append("\tRegion: " + location["region"].toString());
+        }
+        if(location.contains("latitude") && location["latitude"].isDouble())
+        {
+            ui->textLaunchpad->append("\tLatitude: " + QString::number(location["latitude"].toDouble(), 'f', 10));
+        }
+        if(location.contains("longitude") && location["longitude"].isDouble())
+        {
+            ui->textLaunchpad->append("\tLongitude: " + QString::number(location["longitude"].toDouble(), 'f', 10));
+        }
+    }
+    if(launchpad.contains("vehicles_launched") && launchpad["vehicles_launched"].isString())
+    {
+        ui->textLaunchpad->append("Vehicles launched: " + launchpad["vehicles_launched"].toString());
     }
 }

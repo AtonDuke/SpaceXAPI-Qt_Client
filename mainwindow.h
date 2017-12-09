@@ -39,6 +39,7 @@ private:
     void parseRocketStage(QJsonObject stage);
     void parseEngines(QJsonObject engine, QString tabulator);
     void parseCapsule(QJsonObject capsule);
+    void parseLaunchpad(QJsonObject launchpad);
 private slots:
     void downloadFinished(QNetworkReply *reply);
 
