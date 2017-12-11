@@ -26,6 +26,7 @@ public slots:
     void onButtonHelp();
 
 private:
+    int tabulatorWidth;
     void refreshCompany(QJsonDocument doc);
     void refreshRocket(QJsonDocument doc);
     void refreshCapsule(QJsonDocument doc);
@@ -40,6 +41,7 @@ private:
     void parseEngines(QJsonObject engine, QString tabulator);
     void parseCapsule(QJsonObject capsule);
     void parseLaunchpad(QJsonObject launchpad);
+    void parseLaunch(QJsonObject launch);
 private slots:
     void downloadFinished(QNetworkReply *reply);
 

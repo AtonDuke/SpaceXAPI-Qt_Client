@@ -9,12 +9,15 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    tabulatorWidth = 20;
 
     ui->tabWidget->setCurrentIndex(0);
     ui->radioRocketID->click();
@@ -26,6 +29,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->textLaunchpad->setOpenExternalLinks(true);
     ui->textRocket->setOpenExternalLinks(true);
     ui->textCapsule->setOpenExternalLinks(true);
+    ui->textCompany->setTabStopWidth(tabulatorWidth);
+    ui->textRocket->setTabStopWidth(tabulatorWidth);
+    ui->textCapsule->setTabStopWidth(tabulatorWidth);
+    ui->textLaunchpad->setTabStopWidth(tabulatorWidth);
+    ui->textLaunches->setTabStopWidth(tabulatorWidth);
 
     url = QUrl("https://api.spacexdata.com/v2/");
 
@@ -102,8 +110,28 @@ void MainWindow::onButtonRefreshLaunchpad()
 
 void MainWindow::onButtonRefreshLaunches()
 {
-//    QNetworkRequest request();
-//    QNetworkReply *reply = manager.get(request);
+    QString string;
+    string.append("launches");
+    bool latest = false;
+    if(ui->radioLaunchesLatest->isChecked())
+    {
+        latest = true;
+        string.append("/latest");
+    }
+    if(ui->checkLaunchesUpcoming->isChecked() && !latest)
+    {
+        string.append("/upcoming");
+    }
+    if(ui->radioLaunchesFlightNo->isChecked())
+    {
+        string.append("?flight_number=" + ui->lineSearchLaunches->text());
+    }
+    if(ui->radioLaunchesYear->isChecked())
+    {
+        string.append("?launch_year=" + ui->lineSearchLaunches->text());
+    }
+    QNetworkRequest request(QUrl(url.toString() + string));
+    QNetworkReply *reply = manager.get(request);
 }
 
 void MainWindow::onButtonHelp()
@@ -133,7 +161,7 @@ void MainWindow::onButtonHelp()
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "Flight number: Filter by flight number.\n";
         helpString += "Launch year: Filter by year of launch.\n";
-        helpString += "Latest: Display only latest launches.\n";
+        helpString += "Latest: Display only latest launches. Has priority over Upcoming.\n";
         helpString += "Upcoming: Display only upcoming launches.";
         break;
     default:
@@ -163,6 +191,10 @@ void MainWindow::downloadFinished(QNetworkReply *reply)
         if(reply->url().toString().contains("launchpads"))
         {
             refreshLaunchpad(json);
+        }
+        if(reply->url().toString().contains("launches"))
+        {
+            refreshLaunches(json);
         }
     }
     else
@@ -370,7 +402,21 @@ void MainWindow::refreshLaunchpad(QJsonDocument doc)
 
 void MainWindow::refreshLaunches(QJsonDocument doc)
 {
-
+    QJsonArray launchArray;
+    QJsonObject launch;
+    ui->textLaunches->clear();
+    if(ui->radioLaunchesLatest->isChecked())
+    {
+        parseLaunch(doc.object());
+        return;
+    }
+    launchArray = doc.array();
+    for(int i = 0; i < launchArray.count(); ++i)
+    {
+        launch = launchArray.at(i).toObject();
+        parseLaunch(launch);
+        ui->textLaunches->append("");
+    }
 }
 
 QString MainWindow::boolToString(bool value)
@@ -851,5 +897,175 @@ void MainWindow::parseLaunchpad(QJsonObject launchpad)
     if(launchpad.contains("vehicles_launched") && launchpad["vehicles_launched"].isString())
     {
         ui->textLaunchpad->append("Vehicles launched: " + launchpad["vehicles_launched"].toString());
+    }
+}
+
+void MainWindow::parseLaunch(QJsonObject launch)
+{
+    if(launch.contains("flight_number") && launch["flight_number"].isDouble())
+    {
+        ui->textLaunches->append("Flight number: " + QString::number(launch["flight_number"].toInt()));
+    }
+    if(launch.contains("launch_year") && launch["launch_year"].isString())
+    {
+        ui->textLaunches->append("Launch year: " + launch["launch_year"].toString());
+    }
+    if(launch.contains("launch_date_utc") && launch["launch_date_local"].isString())
+    {
+        ui->textLaunches->append("Launch date (UTC): " + launch["launch_date_utc"].toString());
+    }
+    if(launch.contains("launch_date_local") && launch["launch_date_local"].isString())
+    {
+        ui->textLaunches->append("Launch date (local): " + launch["launch_date_local"].toString());
+    }
+    if(launch.contains("rocket") && launch["rocket"].isObject())
+    {
+        QJsonObject rocket = launch["rocket"].toObject();
+        ui->textLaunches->append("Rocket:");
+        if(rocket.contains("rocket_id") && rocket["rocket_id"].isString())
+        {
+            ui->textLaunches->append("\tRocket ID: " + rocket["rocket_id"].toString());
+        }
+        if(rocket.contains("rocket_name") && rocket["rocket_name"].isString())
+        {
+            ui->textLaunches->append("\tRocket name: " + rocket["rocket_name"].toString());
+        }
+        if(rocket.contains("rocket_type") && rocket["rocket_type"].isString())
+        {
+            ui->textLaunches->append("\tRocket type: " + rocket["rocket_type"].toString());
+        }
+        if(rocket.contains("first_stage") && rocket["first_stage"].isObject())
+        {
+            QJsonObject firstStage = rocket["first_stage"].toObject();
+            ui->textLaunches->append("\tFirst stage:");
+            if(firstStage.contains("cores") && firstStage["cores"].isArray())
+            {
+                QJsonArray coreArray = firstStage["cores"].toArray();
+                ui->textLaunches->append("\t\tCores:");
+                for(int i = 0; i < coreArray.count(); ++i)
+                {
+                    ui->textLaunches->append("\t\t\t" + QString::number(i) + ":");
+                    QJsonObject core = coreArray[i].toObject();
+                    if(core.contains("core_serial") && core["core_serial"].isString())
+                    {
+                        ui->textLaunches->append("\t\t\t\tCore serial number: " + core["core_serial"].toString());
+                    }
+                    if(core.contains("reused") && core["reused"].isBool())
+                    {
+                        ui->textLaunches->append("\t\t\t\tReused: " + boolToString(core["reused"].toBool()));
+                    }
+                    if(core.contains("land_success") && core["land_success"].isBool())
+                    {
+                        ui->textLaunches->append("\t\t\t\tLand success: " + boolToString(core["land_success"].toBool()));
+                    }
+                    if(core.contains("landing_type") && core["landing_type"].isString())
+                    {
+                        ui->textLaunches->append("\t\t\t\tLanding type: " + core["landing_type"].toString());
+                    }
+                    if(core.contains("landing_vehicle") && core["landing_vehicle"].isString())
+                    {
+                        ui->textLaunches->append("\t\t\t\tLanding vehicle: " + core["landing_vehicle"].toString());
+                    }
+                }
+            }
+        }
+        if(rocket.contains("second_stage") && rocket["second_stage"].isObject())
+        {
+            QJsonObject secondStage = rocket["second_stage"].toObject();
+            ui->textLaunches->append("\tSecond stage:");
+            if(secondStage.contains("payloads") && secondStage["payloads"].isArray())
+            {
+                QJsonArray payloadArray = secondStage["payloads"].toArray();
+                ui->textLaunches->append("\t\tPayloads:");
+                for(int i = 0; i < payloadArray.count(); ++i)
+                {
+                    ui->textLaunches->append("\t\t\t" + QString::number(i) + ":");
+                    QJsonObject payload = payloadArray[i].toObject();
+                    if(payload.contains("payload_id") && payload["payload_id"].isString())
+                    {
+                        ui->textLaunches->append("\t\t\t\tPayload ID: " + payload["payload_id"].toString());
+                    }
+                    if(payload.contains("reused") && payload["reused"].isBool())
+                    {
+                        ui->textLaunches->append("\t\t\t\tReused: " + boolToString(payload["reused"].toBool()));
+                    }
+                    if(payload.contains("customers") && payload["customers"].isArray())
+                    {
+                        QJsonArray customers = payload["customers"].toArray();
+                        ui->textLaunches->append("\t\t\t\tCustomers:");
+                        for(int j = 0; j < customers.count(); ++j)
+                        {
+                            if(customers[j].isString())
+                            {
+                                ui->textLaunches->append("\t\t\t\t\t" + QString::number(j) + ": " + customers[j].toString());
+                            }
+                        }
+                    }
+                    if(payload.contains("payload_type") && payload["payload_type"].isString())
+                    {
+                        ui->textLaunches->append("\t\t\t\tPayload type: " + payload["payload_type"].toString());
+                    }
+                    if(payload.contains("payload_mass_kg") && payload["payload_mass_kg"].isDouble())
+                    {
+                        ui->textLaunches->append("\t\t\t\tPayload mass: " + QString::number(payload["payload_mass_kg"].toInt()) + " kg");
+                    }
+                    if(payload.contains("orbit") && payload["orbit"].isString())
+                    {
+                        ui->textLaunches->append("\t\t\t\tOrbit: " + payload["orbit"].toString());
+                    }
+                }
+            }
+        }
+    }
+    if(launch.contains("reuse") && launch["reuse"].isObject())
+    {
+        QJsonObject reuse = launch["reuse"].toObject();
+        ui->textLaunches->append("Reuse:");
+        QStringList list;
+        list << "core" << "side_core1" << "side_core2" << "fairings" << "capsule";
+        for(int i = 0; i < list.count(); ++i)
+        {
+            if(reuse.contains(list.at(i)) && reuse[list.at(i)].isBool())
+            {
+                QString string = list.at(i);
+                string.replace('_',' ');
+                string.replace(0, 1, string.at(0).toUpper());
+                ui->textLaunches->append("\t" + string + ": " + boolToString(reuse[list.at(i)].toBool()));
+            }
+        }
+    }
+    if(launch.contains("launch_site") && launch["launch_site"].isObject())
+    {
+        QJsonObject site = launch["launch_site"].toObject();
+        ui->textLaunches->append("Launch site:");
+        if(site.contains("site_id") && site["site_id"].isString())
+        {
+            ui->textLaunches->append("\tSite ID: " + site["site_id"].toString());
+        }
+        if(site.contains("site_name_long") && site["site_name_long"].isString())
+        {
+            ui->textLaunches->append("\tSite name: " + site["site_name_long"].toString());
+        }
+    }
+    if(launch.contains("launch_success") && launch["launch_success"].isBool())
+    {
+        ui->textLaunches->append("Launch success: " + boolToString(launch["launch_success"].toBool()));
+    }
+    if(launch.contains("links") && launch["links"].isObject())
+    {
+        QJsonObject links = launch["links"].toObject();
+        ui->textLaunches->append("Links:");
+        QStringList list;
+        list << "mission_patch" << "presskit" << "article_link" << "video_link";
+        for(int i = 0; i < list.count(); ++i)
+        {
+            if(links.contains(list.at(i)) && links[list.at(i)].isString())
+            {
+                QString string = list.at(i);
+                string.replace('_',' ');
+                string.replace(0, 1, string.at(0).toUpper());
+                ui->textLaunches->append("\t" + string + ": " + links[list.at(i)].toString());
+            }
+        }
     }
 }
