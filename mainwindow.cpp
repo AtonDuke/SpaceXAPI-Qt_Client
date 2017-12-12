@@ -338,7 +338,7 @@ void MainWindow::refreshCapsule(QJsonDocument doc)
         }
         capsuleArray.append(capsule);
     }
-    else qDebug() << "Pokud dám qDebug mezi tento bod";
+    else
     {
         capsuleArray = doc.array();
     }
@@ -347,7 +347,6 @@ void MainWindow::refreshCapsule(QJsonDocument doc)
         capsule = capsuleArray.at(i).toObject();
         if(!filterFlag || (capsule.contains("name") && capsule["name"].isString() && capsule["name"].toString() == ui->lineSearchCapsule->text()))
         {
-            qDebug() << " a tento bod, tak to z ničeho nic funguje, jinak to padá. WTF!";
             parseCapsule(capsule);
             found = true;
             ui->textCapsule->append("");
@@ -704,9 +703,9 @@ void MainWindow::parseCapsule(QJsonObject capsule)
             QString string;
             string.append("\tCargo: ");
             QJsonObject cargo = variations["cargo"].toObject();
-            if(cargo.contains("description") && cargo["description"].isString())
+            if(cargo.contains("details") && cargo["details"].isString())
             {
-                string.append(cargo["description"].toString());
+                string.append(cargo["details"].toString());
             }
             ui->textCapsule->append(string);
         }
@@ -715,9 +714,9 @@ void MainWindow::parseCapsule(QJsonObject capsule)
             QString string;
             string.append("\tCrew: ");
             QJsonObject crew = variations["crew"].toObject();
-            if(crew.contains("description") && crew["description"].isString())
+            if(crew.contains("details") && crew["details"].isString())
             {
-                string.append(crew["description"].toString());
+                string.append(crew["details"].toString());
             }
             ui->textCapsule->append(string);
         }
@@ -726,9 +725,9 @@ void MainWindow::parseCapsule(QJsonObject capsule)
             QString string;
             string.append("\tDragonlab: ");
             QJsonObject dragonlab = variations["dragonlab"].toObject();
-            if(dragonlab.contains("description") && dragonlab["description"].isString())
+            if(dragonlab.contains("details") && dragonlab["details"].isString())
             {
-                string.append(dragonlab["description"].toString());
+                string.append(dragonlab["details"].toString());
             }
             ui->textCapsule->append(string);
         }
@@ -808,23 +807,23 @@ void MainWindow::parseCapsule(QJsonObject capsule)
         QJsonObject rpm = capsule["return_payload_mass"].toObject();
         if(rpm.contains("kg") && rpm["kg"].isDouble())
         {
-            ui->textCapsule->append("Return payload mass: " + QString::number(rpm["return_payload_mass"].toInt()) + " kg");
+            ui->textCapsule->append("Return payload mass: " + QString::number(rpm["kg"].toInt()) + " kg");
         }
     }
     if(capsule.contains("return_payload_vol") && capsule["return_payload_vol"].isObject())
     {
         QJsonObject rpv = capsule["return_payload_vol"].toObject();
-        if(rpv.contains("cubic_meteres") && rpv["cubic_meters"].isDouble())
+        if(rpv.contains("cubic_meters") && rpv["cubic_meters"].isDouble())
         {
-            ui->textCapsule->append("Return payload volume: " + QString::number(rpv["return_payload_vol"].toInt()) + " m3");
+            ui->textCapsule->append("Return payload volume: " + QString::number(rpv["cubic_meters"].toInt()) + " m3");
         }
     }
     if(capsule.contains("pressurized_capsule") && capsule["pressurized_capsule"].isObject())
     {
-        QJsonObject capsule = capsule["pressurized_capsule"].toObject();
-        if(capsule.contains("payload_volume") && capsule["payload_volume"].isObject())
+        QJsonObject pres = capsule["pressurized_capsule"].toObject();
+        if(pres.contains("payload_volume") && pres["payload_volume"].isObject())
         {
-            QJsonObject pv = capsule["payload_volume"].toObject();
+            QJsonObject pv = pres["payload_volume"].toObject();
             if(pv.contains("cubic_meters") && pv["cubic_meters"].isDouble())
             {
                 ui->textCapsule->append("Pressurized capsule payload volume: " + QString::number(pv["cubic_meters"].toInt()) + " m3");
