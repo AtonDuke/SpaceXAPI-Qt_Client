@@ -18,6 +18,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 public slots:
+    void startupRefresh();
     void onButtonRefreshCompany();
     void onButtonRefreshRocket();
     void onButtonRefreshCapsule();

@@ -44,6 +44,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->buttonRefreshCapsule, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshCapsule()));
     connect(ui->buttonRefreshLaunchpad, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshLaunchpad()));
     connect(ui->buttonRefreshLaunches, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshLaunches()));
+    connect(ui->lineSearchRocket, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshRocket()));
+    connect(ui->lineSearchCapsule, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshCapsule()));
+    connect(ui->lineSearchLaunchpad, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshLaunchpad()));
+    connect(ui->lineSearchLaunches, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshLaunches()));
+
+    QTimer::singleShot(100, this, SLOT(startupRefresh()));
 }
 
 MainWindow::~MainWindow()
@@ -145,30 +151,56 @@ void MainWindow::onButtonHelp()
     case 1:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "ID: Filter by ID.\n";
-        helpString += "Name: Filter by rocket name.";
+        helpString += "Name: Filter by rocket name.\n";
+        helpString += "Pressing ENTER while search line is selected triggers Refresh.";
         break;
     case 2:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "ID: Filter by ID.\n";
-        helpString += "Name: Filter by capsule name.";
+        helpString += "Name: Filter by capsule name.\n";
+        helpString += "Pressing ENTER while search line is selected triggers Refresh.";
         break;
     case 3:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "ID: Filter by ID.\n";
-        helpString += "Name: Filter by launchpad name.";
+        helpString += "Name: Filter by launchpad name.\n";
+        helpString += "Pressing ENTER while search line is selected triggers Refresh.";
         break;
     case 4:
         helpString += "Refresh: If search line is empty, refreshes info, else applies filter and refreshes info.\n";
         helpString += "Flight number: Filter by flight number.\n";
         helpString += "Launch year: Filter by year of launch.\n";
         helpString += "Latest: Display only latest launches. Has priority over Upcoming.\n";
-        helpString += "Upcoming: Display only upcoming launches.";
+        helpString += "Upcoming: Display only upcoming launches.\n";
+        helpString += "Pressing ENTER while search line is selected triggers Refresh.";
         break;
     default:
         helpString += "Unknow tabwidget index.";
         break;
     }
     QMessageBox::information(this, "Help", helpString);
+}
+
+void MainWindow::startupRefresh()
+{
+    ui->buttonHelp->setEnabled(false);
+    ui->buttonRefreshCapsule->setEnabled(false);
+    ui->buttonRefreshCompany->setEnabled(false);
+    ui->buttonRefreshLaunches->setEnabled(false);
+    ui->buttonRefreshLaunchpad->setEnabled(false);
+    ui->buttonRefreshRocket->setEnabled(false);
+    QMessageBox::information(this, "Please wait", "Loading data.\nPlease wait.");
+    onButtonRefreshCompany();
+    onButtonRefreshRocket();
+    onButtonRefreshCapsule();
+    onButtonRefreshLaunchpad();
+    onButtonRefreshLaunches();
+    ui->buttonHelp->setEnabled(true);
+    ui->buttonRefreshCapsule->setEnabled(true);
+    ui->buttonRefreshCompany->setEnabled(true);
+    ui->buttonRefreshLaunches->setEnabled(true);
+    ui->buttonRefreshLaunchpad->setEnabled(true);
+    ui->buttonRefreshRocket->setEnabled(true);
 }
 
 void MainWindow::downloadFinished(QNetworkReply *reply)
