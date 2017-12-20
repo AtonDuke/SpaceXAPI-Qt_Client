@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->lineSearchCapsule, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshCapsule()));
     connect(ui->lineSearchLaunchpad, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshLaunchpad()));
     connect(ui->lineSearchLaunches, SIGNAL(returnPressed()), this, SLOT(onButtonRefreshLaunches()));
+    connect(ui->checkLaunchesUpcoming, SIGNAL(clicked(bool)), this, SLOT(onButtonRefreshLaunches()));
 
     QTimer::singleShot(100, this, SLOT(startupRefresh()));
 }
@@ -189,7 +190,7 @@ void MainWindow::startupRefresh()
     ui->buttonRefreshLaunches->setEnabled(false);
     ui->buttonRefreshLaunchpad->setEnabled(false);
     ui->buttonRefreshRocket->setEnabled(false);
-    QMessageBox::information(this, "Please wait", "Loading data.\nPlease wait.");
+    QMessageBox::information(this, "Please wait", "Loading data.\nPlease close this dialog and wait.");
     onButtonRefreshCompany();
     onButtonRefreshRocket();
     onButtonRefreshCapsule();
@@ -306,6 +307,9 @@ void MainWindow::refreshCompany(QJsonDocument doc)
         address.append("USA");
         ui->textCompany->append(address);
     }
+    QTextCursor cursor = ui->textCompany->textCursor();
+    cursor.setPosition(0);
+    ui->textCompany->setTextCursor(cursor);
 }
 
 void MainWindow::refreshRocket(QJsonDocument doc)
@@ -347,6 +351,9 @@ void MainWindow::refreshRocket(QJsonDocument doc)
     {
         ui->textRocket->setText("ERROR: No match found!");
     }
+    QTextCursor cursor = ui->textRocket->textCursor();
+    cursor.setPosition(0);
+    ui->textRocket->setTextCursor(cursor);
 }
 
 void MainWindow::refreshCapsule(QJsonDocument doc)
@@ -388,6 +395,9 @@ void MainWindow::refreshCapsule(QJsonDocument doc)
     {
         ui->textCapsule->setText("ERROR: No match found!");
     }
+    QTextCursor cursor = ui->textCapsule->textCursor();
+    cursor.setPosition(0);
+    ui->textCapsule->setTextCursor(cursor);
 }
 
 void MainWindow::refreshLaunchpad(QJsonDocument doc)
@@ -429,6 +439,9 @@ void MainWindow::refreshLaunchpad(QJsonDocument doc)
     {
         ui->textLaunchpad->setText("ERROR: No match found!");
     }
+    QTextCursor cursor = ui->textLaunchpad->textCursor();
+    cursor.setPosition(0);
+    ui->textLaunchpad->setTextCursor(cursor);
 }
 
 void MainWindow::refreshLaunches(QJsonDocument doc)
@@ -448,6 +461,9 @@ void MainWindow::refreshLaunches(QJsonDocument doc)
         parseLaunch(launch);
         ui->textLaunches->append("");
     }
+    QTextCursor cursor = ui->textLaunches->textCursor();
+    cursor.setPosition(0);
+    ui->textLaunches->setTextCursor(cursor);
 }
 
 QString MainWindow::boolToString(bool value)
