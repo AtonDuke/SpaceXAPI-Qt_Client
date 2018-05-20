@@ -90,7 +90,17 @@ void MainWindow::onButtonRefreshRocket()
     }
     if(ui->lineSearchRocket->text() == "Kill SpaceX!")
     {
-        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=nULPR9MjKNw\">Elon Musk - When \"They\" Tried To Kill SpaceX | MUST WATCH</a>");
+        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=zruCDVLIZbY\">Elon Musk - When \"They\" Tried To Kill SpaceX | MUST WATCH</a>");
+        return;
+    }
+    if(ui->lineSearchRocket->text() == "Experts")
+    {
+        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=56uD6Z3EIWI\">Elon Musk - When \"EXPERTS\" Were Against SpaceX - MUST WATCH</a>");
+        return;
+    }
+    if(ui->lineSearchRocket->text() == "Change")
+    {
+        ui->textRocket->setHtml("<a href=\"https://www.youtube.com/watch?v=kRi1wHQlfDo\">Elon Musk - How SpaceX Changed the Space Race</a>");
         return;
     }
     QString string;
@@ -120,12 +130,18 @@ void MainWindow::onButtonRefreshLaunches()
     QString string;
     string.append("launches");
     bool latest = false;
+    bool next = false;
     if(ui->radioLaunchesLatest->isChecked())
     {
         latest = true;
         string.append("/latest");
     }
-    if(ui->checkLaunchesUpcoming->isChecked() && !latest)
+    if(ui->radioLaunchesNext->isChecked())
+    {
+        next = true;
+        string.append("/next");
+    }
+    if(ui->checkLaunchesUpcoming->isChecked() && !latest &&! next)
     {
         string.append("/upcoming");
     }
@@ -172,6 +188,7 @@ void MainWindow::onButtonHelp()
         helpString += "Flight number: Filter by flight number.\n";
         helpString += "Launch year: Filter by year of launch.\n";
         helpString += "Latest: Display only latest launches. Has priority over Upcoming.\n";
+        helpString += "Next: Display only the next upcoming launch. Has priority over Upcoming.\n";
         helpString += "Upcoming: Display only upcoming launches.\n";
         helpString += "Pressing ENTER while search line is selected triggers Refresh.";
         break;
@@ -190,7 +207,6 @@ void MainWindow::startupRefresh()
     ui->buttonRefreshLaunches->setEnabled(false);
     ui->buttonRefreshLaunchpad->setEnabled(false);
     ui->buttonRefreshRocket->setEnabled(false);
-    QMessageBox::information(this, "Please wait", "Loading data.\nPlease close this dialog and wait.");
     onButtonRefreshCompany();
     onButtonRefreshRocket();
     onButtonRefreshCapsule();
@@ -449,7 +465,7 @@ void MainWindow::refreshLaunches(QJsonDocument doc)
     QJsonArray launchArray;
     QJsonObject launch;
     ui->textLaunches->clear();
-    if(ui->radioLaunchesLatest->isChecked())
+    if(ui->radioLaunchesLatest->isChecked() || ui->radioLaunchesNext->isChecked())
     {
         parseLaunch(doc.object());
         return;
